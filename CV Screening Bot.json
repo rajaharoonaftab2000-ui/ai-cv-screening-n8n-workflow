@@ -1,0 +1,365 @@
+{
+  "name": "CV Screening Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Job Application",
+        "formDescription": "Please fill out this form to apply for the position. Upload your CV in PDF format. Our team will review your application and get back to you soon.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name"
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email"
+            },
+            {
+              "fieldLabel": "CV",
+              "fieldType": "file",
+              "acceptFileTypes": "PDF"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -1168,
+        96
+      ],
+      "id": "f500525a-83f8-41e4-9df6-2f9bf10f32b5",
+      "name": "On form submission",
+      "webhookId": "60a9071d-c5af-4a8b-a9d6-ad0fe2e06f23"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const binaryData = await this.helpers.getBinaryDataBuffer(0, 'CV');\nconst base64 = binaryData.toString('base64');\n\nreturn {\n  json: {\n    name: $json['Full Name'],\n    email: $json['Email'],\n    pdfBase64: base64\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        96
+      ],
+      "id": "e91a5f13-eb87-472f-a0cf-aadfd8e29abf",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=Your_api_key",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [\n      { \"text\": \"You are screening a job application for a Customer Support Representative position. Job requirements: at least 1 year of customer service experience, good communication skills in Urdu and English, comfortable using computers and messaging apps.\\n\\nRead the attached CV and evaluate the candidate against these requirements. Respond ONLY in this exact format:\\nScore: <a number from 0 to 100>\\nFeedback: <2-3 sentence explanation of the score>\" },\n      { \"inline_data\": { \"mime_type\": \"application/pdf\", \"data\": \"{{ $json.pdfBase64 }}\" } }\n    ]\n  }]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -784,
+        96
+      ],
+      "id": "9f6fd624-f829-4348-88f0-d0f4f0c6bbfb",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const text = $json.candidates[0].content.parts[0].text;\n\nconst scoreMatch = text.match(/Score:\\s*(\\d+)/);\nconst feedbackMatch = text.match(/Feedback:\\s*(.+)/s);\n\nconst score = scoreMatch ? parseInt(scoreMatch[1]) : 0;\nconst feedback = feedbackMatch ? feedbackMatch[1].trim() : '';\n\nreturn {\n  json: {\n    name: $('Code in JavaScript').item.json.name,\n    email: $('Code in JavaScript').item.json.email,\n    score,\n    feedback\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -592,
+        96
+      ],
+      "id": "2b71e48c-965b-4397-a2de-075f1be03851",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1pQo4p78sJe8r4ckiyeZ5VLbozkYl8ZsjBjjN5QdOsQE",
+          "mode": "list",
+          "cachedResultName": "CV Application",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pQo4p78sJe8r4ckiyeZ5VLbozkYl8ZsjBjjN5QdOsQE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pQo4p78sJe8r4ckiyeZ5VLbozkYl8ZsjBjjN5QdOsQE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.name }}",
+            "Email": "={{ $json.email }}",
+            "Score": "={{ $json.score }}",
+            "Feedback": "={{ $json.feedback }}",
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback",
+              "displayName": "Feedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -400,
+        96
+      ],
+      "id": "5b2a0eda-1cb4-49e7-8d9e-1f248d43946f",
+      "name": "Append row in sheet"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "26b61cb0-92c7-458c-9bfa-038df5fbd459",
+              "leftValue": "={{ $json.Score }}",
+              "rightValue": 20,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "b47e0c66-5b91-4e4a-8a18-fa705f25ba1d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Application Update",
+        "message": "=Dear {{ $json.Name }},<br>Thank you for applying and for taking the time to share your CV with us. After careful review, we have decided to move forward with other candidates whose experience more closely matches our current requirements.  We appreciate your interest and encourage you to apply for future openings that match your profile.<br>  Best regards,<br> Hiring Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        208
+      ],
+      "id": "048d7c59-c212-473a-b651-008e9aebe9d8",
+      "name": "Send a message",
+      "webhookId": "7ded1b65-458f-41ff-8aeb-e3607c792310"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Congratulations! you've been shortlisted",
+        "message": "=Dear {{ $json.Name }},<br>  Congratulations! After reviewing your application, we are pleased to inform you that you have been shortlisted for the next stage.  We will contact you shortly to schedule your interview. In the meantime, feel free to reach out if you have any questions.<br>  Best regards,<br> Hiring Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "35d0ccb9-f9ba-4d82-b154-ecc8c5efe5f8",
+      "name": "Send a message1",
+      "webhookId": "6bbfb159-75c8-49d8-9641-ad0aea40561a"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "58ee4bedb9cf6c7e248abd669b582db0e200b10013197ac806b0956d41d68621@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Interview"
+        },
+        "start": "={{ $now.plus({ days: 3 }).set({ hour: 11, minute: 0 }).toISO() }}",
+        "end": "={{ $now.plus({ days: 3 }).set({ hour: 11, minute: 30 }).toISO() }}",
+        "additionalFields": {
+          "description": "=Candidate Email: {{ $('Code in JavaScript1').item.json.email }}\nScore: {{ $('Code in JavaScript1').item.json.score }}\nFeedback: {{ $('Code in JavaScript1').item.json.feedback }}",
+          "summary": "=Interview - {{ $('Code in JavaScript1').item.json.name }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "801b67b2-8d75-40c4-aac5-0067c1d9f287",
+      "name": "Create an event"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ff915e2c-e815-45e7-b6e6-7c3521781ca3",
+  "meta": {
+    "instanceId": "1afb6aab3770da28edd93afb11e067ae0dd5545efbb2d08a1dd75a767c9cb8d3"
+  },
+  "nodeGroups": [],
+  "id": "pymQvLS2DmnxJ7Oe",
+  "tags": []
+}
