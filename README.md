@@ -164,4 +164,4 @@ Completed portfolio project.
 
 Demo Video
 
-"Watch the Demo" (./CV_Screening_Automation_Demo.mp4)
+[Watch the Demo](./CV_Screening_Automation_Demo.mp4)
